@@ -48,6 +48,10 @@ public class NPPGui {
 
     public NPPGui() {
         JFrame f = new JFrame("NPP-SIM — Симулятор управления АЭС (ВВЭР-1000)");
+        try {
+            java.net.URL iconUrl = NPPGui.class.getResource("/app-icon.png");
+            if (iconUrl != null) f.setIconImage(new javax.swing.ImageIcon(iconUrl).getImage());
+        } catch (Exception ignored) { }
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         f.setSize(1360, 860);
         f.setLocationRelativeTo(null);
