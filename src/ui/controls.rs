@@ -393,17 +393,13 @@ fn apply_rods(plant: &mut Plant, rod_sel: &mut [bool; 9], rod_input: &RodInput) 
         );
         return;
     }
-    let pct: i32 = match rod_input.pct.trim().parse() {
+    let pct = match crate::core::rods::parse_withdrawal_pct(&rod_input.pct) {
         Ok(v) => v,
-        Err(_) => {
-            plant.add_log("Стержни: некорректный % извлечения", LogClass::Warn);
+        Err(msg) => {
+            plant.add_log(msg, LogClass::Warn);
             return;
         }
     };
-    if !(0..=100).contains(&pct) {
-        plant.add_log("Стержни: % извлечения вне диапазона 0–100", LogClass::Warn);
-        return;
-    }
     plant.set_rods(&sel, 100.0 - pct as f64);
     for &k in &sel {
         rod_sel[k] = false;

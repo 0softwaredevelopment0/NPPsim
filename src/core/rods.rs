@@ -97,3 +97,13 @@ impl Plant {
         sp.rate()
     }
 }
+
+/// Parse a "% withdrawal" text input: 0..100 integer. Port of the validation
+/// part of the Java GUI `applyRods()` (error strings match the original).
+pub fn parse_withdrawal_pct(text: &str) -> Result<i32, &'static str> {
+    let pct: i32 = text.trim().parse().map_err(|_| "Стержни: некорректный % извлечения")?;
+    if !(0..=100).contains(&pct) {
+        return Err("Стержни: % извлечения вне диапазона 0–100");
+    }
+    Ok(pct)
+}
