@@ -1,7 +1,5 @@
 # NPP-SIM — Nuclear Power Plant Control Simulator (VVER-1000)
 
-![Development status](https://img.shields.io/badge/status-Alpha-red)
-
 **A desktop Java (Swing) application. Portable version:**
 copy the whole folder anywhere and run `NPPsim.bat`.
 
