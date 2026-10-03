@@ -2,8 +2,12 @@
 
 ![Latest release](https://img.shields.io/github/v/release/0softwaredevelopment0/NPPsim)
 
-**A desktop Java (Swing) application. Portable version:**
-copy the whole folder anywhere and run `NPPsim.bat`.
+**A desktop Rust (egui/eframe) application.** Portable version:
+copy the whole folder anywhere and run `NPPsim.bat` (or `NPPsim.exe`).
+
+> Version 2.0 — complete rewrite of the Java/Swing original in Rust with a
+> layered architecture: pure physics core (`src/core`) with no GUI code, and
+> a separate presentation layer (`src/ui`).
 
 ---
 
@@ -15,25 +19,26 @@ copy the whole folder anywhere and run `NPPsim.bat`.
 
 ```
 NPPsim/
-├── NPPsim.bat     ← portable launcher (double-click)
-├── NPPsim.jar     ← executable program (small, standard Java only)
-├── src/           ← source code (Reactor.java, NPPGui.java, NPPsim.java, PhysicsTest.java)
-├── web-version/   ← bonus: the previous web version (index.html, _test.js)
+├── NPPsim.bat      ← portable launcher (double-click; builds via cargo if exe missing)
+├── src/
+│   ├── main.rs     ← CLI entry (--version, --selftest) + GUI startup
+│   ├── core/       ← pure simulation domain (no GUI): physics, protections, scenarios
+│   └── ui/         ← egui presentation: header, controls, core view, scheme, trends
+├── tests/          ← integration tests (full physics suite)
 └── README.md
 ```
 
-The program is written in Java and uses only the standard library
-(`javax.swing`). It requires no internet connection and no installation —
-only **Java 8+** (JRE/JDK) is needed. If Java is not installed, download it:
-https://adoptium.net (or place a `jre` folder next to `NPPsim.bat` — the
-launcher will find it first).
+The program is written in Rust and uses `egui`/`eframe` for the GUI.
+It requires no internet connection and no installation — a single
+standalone `NPPsim.exe` (~14 MB). To build from source you need the
+Rust toolchain: https://rustup.rs
 
 ## Launch
 
-- Double-click `NPPsim.bat`.
-- Or in a console: `java -jar NPPsim.jar`
-- Version check: `java -jar NPPsim.jar --version`
-- Physics self-test: `java -jar NPPsim.jar --selftest` (or `java PhysicsTest`)
+- Double-click `NPPsim.bat` (builds `NPPsim.exe` first if missing).
+- Or in a console: `cargo run --release`
+- Version check: `NPPsim.exe --version`
+- Physics self-test: `NPPsim.exe --selftest` (45 checks, all must PASS)
 
 ## What is simulated
 
@@ -154,16 +159,39 @@ control!
 ## Building from source
 
 ```
-cd src
-javac -encoding UTF-8 -d ../out *.java
-cp app-icon.png ../out/
-jar cfe ../NPPsim.jar NPPsim -C ../out .
+cargo build --release
+# the executable is at target/release/NPPsim.exe
+```
+
+## Architecture
+
+Layered, no god-objects:
+
+```
+src/
+├── core/            ← pure domain, zero GUI dependencies
+│   ├── constants.rs    physical constants
+│   ├── types.rs        enums (AZ state, rod speed, BRU mode, task kinds…)
+│   ├── state.rs        Plant state + alarms/log
+│   ├── rods.rs         CPS rods, pump/feed flows
+│   ├── physics.rs      integration step (kinetics, circuits, protections)
+│   ├── fuel.rs         assembly temperatures, melting
+│   ├── protection.rs   AZ state machine, turbine trip
+│   ├── scenarios.rs    shift scenarios
+│   ├── events.rs       accident injection + task engine
+│   └── selftest.rs     the 45-check physics suite
+└── ui/              ← egui presentation (one file per panel)
+    ├── mod.rs          NppApp: tick loop, keyboard, layout
+    ├── theme.rs        palette + temp colors
+    ├── widgets.rs      rocker switches, value cards, dashed flows
+    ├── header.rs, readouts.rs, controls.rs,
+    ├── core_view.rs, scheme.rs, trends.rs, panels.rs
 ```
 
 ## Tests
 
-`java -jar NPPsim.jar --selftest` — 39 physics and logic checks (100% stability,
-AZ, iodine pit, LOCA, flow/feed loss, excursion, steam-line rupture, recovery,
-AZ states, task engine, individual rods, fuel temperature, melting, power
-protection, MCP 4×ON/OFF, BRU-A AUT/MAN/OFF and GPD, pressurizer charging).
-All tests pass.
+`NPPsim.exe --selftest` (or `cargo test`) — 45 physics and logic checks
+(100% stability, AZ, iodine pit, LOCA, flow/feed loss, excursion, steam-line
+rupture, recovery, AZ states, task engine, individual rods, fuel temperature,
+melting, power protection, MCP 4×ON/OFF, BRU-A AUT/MAN/OFF and GPD,
+pressurizer charging). All tests pass.

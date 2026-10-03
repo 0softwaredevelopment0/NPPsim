@@ -1,0 +1,9 @@
+[package]
+name = "nppsim"
+version = "2.0.0-alpha.1"
+edition = "2024"
+description = "NPP-SIM — VVER-1000 nuclear power plant control simulator"
+
+[dependencies]
+eframe = "0.36.2"
+egui = "0.36.2"
