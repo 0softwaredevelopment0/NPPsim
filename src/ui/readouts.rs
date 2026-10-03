@@ -5,9 +5,10 @@ use crate::ui::theme;
 use crate::ui::widgets::value_card;
 
 pub fn draw(ui: &mut egui::Ui, plant: &Plant) {
-    ui.horizontal(|ui| {
-        for (label, value, color) in readouts(plant) {
-            value_card(ui, label, &value, color);
+    let data = readouts(plant);
+    ui.columns(6, |cols| {
+        for (i, (label, value, color)) in data.into_iter().enumerate() {
+            value_card(&mut cols[i], label, &value, color);
         }
     });
 }

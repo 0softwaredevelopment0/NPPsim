@@ -38,7 +38,7 @@ impl NppApp {
         let mut plant = Plant::new();
         plant.load_scenario(Scenario::Full);
         plant.add_log(
-            "Р”РёСЃРїРµС‚С‡РµСЂСЃРєР°СЏ: СЃРёРјСѓР»СЏС‚РѕСЂ Р·Р°РїСѓС‰РµРЅ. РљР»Р°РІРёС€Рё: в†‘/в†“ вЂ” СЃС‚РµСЂР¶РЅРё, A вЂ” РђР—, РїСЂРѕР±РµР» вЂ” СЃС‚РѕРї",
+            "Диспетчерская: симулятор запущен. Клавиши: ↑/↓ — стержни, A — АЗ, пробел — стоп",
             crate::core::LogClass::Ok,
         );
         NppApp {
@@ -81,7 +81,7 @@ impl NppApp {
     }
 
     fn tick(&mut self, ctx: &egui::Context) {
-        // ---- simulation tick (real frame time Г— acceleration) ----
+        // ---- simulation tick (real frame time × acceleration) ----
         let dt_real = (ctx.input(|i| i.unstable_dt) as f64).clamp(0.0001, 0.5);
         let rpm = if self.plant.breaker {
             3000.0 * (if self.plant.gov > 0.0 {
@@ -108,9 +108,12 @@ impl NppApp {
                     .inner_margin(egui::Margin::same(6)),
             )
             .show(ui, |ui| {
+                // controls on top (own scroll), fixed task/alarm/journal panels below
+                let bottom = 96.0 + 100.0 + 150.0 + 18.0;
                 egui::ScrollArea::vertical()
+                    .id_salt("controls_scroll")
                     .auto_shrink(false)
-                    .stick_to_bottom(true)
+                    .max_height((ui.available_height() - bottom).max(120.0))
                     .show(ui, |ui| {
                         self.mouse_rod_dir = controls::draw(
                             ui,
@@ -119,11 +122,11 @@ impl NppApp {
                             &mut self.rod_input,
                             &mut self.rng,
                         );
-                        ui.add_space(6.0);
-                        panels::tasks(ui, &self.plant);
-                        panels::alarms(ui, &mut self.plant);
-                        panels::journal(ui, &self.plant);
                     });
+                ui.add_space(4.0);
+                panels::tasks(ui, &self.plant);
+                panels::alarms(ui, &mut self.plant);
+                panels::journal(ui, &self.plant);
             });
     }
 
@@ -139,7 +142,7 @@ impl NppApp {
                 ui.horizontal(|ui| {
                     ui.label(RichText::new("NPP-SIM").strong().size(15.0).color(theme::CYAN));
                     ui.label(
-                        RichText::new("РЎРРњРЈР›РЇРўРћР  РЈРџР РђР’Р›Р•РќРРЇ РђР­РЎ вЂў Р’Р’Р­Р -1000")
+                        RichText::new("СИМУЛЯТОР УПРАВЛЕНИЯ АЭС • ВВЭР-1000")
                             .size(11.0)
                             .color(theme::DIM),
                     );
@@ -148,13 +151,13 @@ impl NppApp {
                         widgets::status_pill(ui, sc, st);
 
                         if ui
-                            .toggle_value(&mut self.sound_on, RichText::new("рџ”Љ Р—РІСѓРє").size(11.0))
+                            .toggle_value(&mut self.sound_on, RichText::new("🔊 Звук").size(11.0))
                             .changed()
                         {
                             self.plant.sound = self.sound_on;
                         }
                         for r in header::RATES {
-                            let txt = format!("{}Г—", r as i64);
+                            let txt = format!("{}×", r as i64);
                             let btn = egui::Button::new(RichText::new(txt).size(11.0)).fill(
                                 if (self.plant.rate - r).abs() < f64::EPSILON {
                                     theme::SEL_BG
@@ -166,27 +169,21 @@ impl NppApp {
                                 self.plant.rate = r;
                             }
                         }
-                        ui.vertical(|ui| {
-                            ui.set_max_width(70.0);
-                            ui.label(RichText::new("РњР’С‚(СЌ)").size(9.0).color(theme::DIM));
-                            ui.label(
-                                RichText::new(format!("{}", self.plant.mwe.round() as i64))
-                                    .strong()
-                                    .size(15.0)
-                                    .color(theme::GREEN),
-                            );
-                        });
-                        ui.vertical(|ui| {
-                            ui.set_max_width(80.0);
-                            ui.label(RichText::new("Р’СЂРµРјСЏ").size(9.0).color(theme::DIM));
-                            ui.label(
-                                RichText::new(theme::fmt_time(self.plant.time))
-                                    .strong()
-                                    .size(14.0)
-                                    .color(theme::CYAN)
-                                    .monospace(),
-                            );
-                        });
+                        ui.separator();
+                        ui.label(
+                            RichText::new(theme::fmt_time(self.plant.time))
+                                .strong()
+                                .size(14.0)
+                                .color(theme::CYAN)
+                                .monospace(),
+                        );
+                        ui.separator();
+                        ui.label(
+                            RichText::new(format!("{} МВт(э)", self.plant.mwe.round() as i64))
+                                .strong()
+                                .size(13.0)
+                                .color(theme::GREEN),
+                        );
                     });
                 });
             });
@@ -198,8 +195,8 @@ impl NppApp {
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
                     for (t, name) in [
-                        (core_view::ViewTab::Core, "РћР±Р·РѕСЂ СЂРµР°РєС‚РѕСЂР°"),
-                        (core_view::ViewTab::Scheme, "РЎС…РµРјР° Р±Р»РѕРєР°"),
+                        (core_view::ViewTab::Core, "Обзор реактора"),
+                        (core_view::ViewTab::Scheme, "Схема блока"),
                     ] {
                         let active = self.tab == t;
                         let btn = egui::Button::new(RichText::new(name).size(11.0)).fill(if active {
@@ -245,7 +242,7 @@ impl NppApp {
         }
         let mut open = self.overlay_open;
         egui::Window::new(
-            RichText::new("вљ  РђР’РђР РР™РќРђРЇ РћРЎРўРђРќРћР’РљРђ Р‘Р›РћРљРђ")
+            RichText::new("⚠ АВАРИЙНАЯ ОСТАНОВКА БЛОКА")
                 .strong()
                 .size(14.0)
                 .color(theme::RED),
@@ -256,12 +253,12 @@ impl NppApp {
         .collapsible(false)
         .show(ctx, |ui| {
             ui.label(
-                "РџСЂРѕРёР·РѕС€Р»Рѕ РїРѕРІСЂРµР¶РґРµРЅРёРµ Р°РєС‚РёРІРЅРѕР№ Р·РѕРЅС‹. Р‘Р»РѕРє РѕСЃС‚Р°РЅРѕРІР»РµРЅ.\nР—Р°РіСЂСѓР·РёС‚Рµ СЃС†РµРЅР°СЂРёР№ РґР»СЏ РїСЂРѕРґРѕР»Р¶РµРЅРёСЏ С‚СЂРµРЅРёСЂРѕРІРєРё.",
+                "Произошло повреждение активной зоны. Блок остановлен.\nЗагрузите сценарий для продолжения тренировки.",
             );
             ui.add_space(8.0);
             ui.horizontal(|ui| {
                 if ui
-                    .button(RichText::new("РќРѕРІР°СЏ СЃРјРµРЅР° вЂ” Р Р°Р±РѕС‚Р° 100%").size(12.0))
+                    .button(RichText::new("Новая смена — Работа 100%").size(12.0))
                     .clicked()
                 {
                     self.plant.load_scenario(Scenario::Full);

@@ -6,7 +6,7 @@ use egui::{Color32, RichText, ScrollArea};
 
 pub fn tasks(ui: &mut egui::Ui, plant: &Plant) {
     panel(ui, "ЗАДАНИЯ ОПЕРАТОРА", 96.0, |ui| {
-        ScrollArea::vertical().show(ui, |ui| {
+        ScrollArea::vertical().max_height(70.0).show(ui, |ui| {
             if plant.tasks.is_empty() {
                 ui.label(RichText::new("○ Нет активных заданий").size(11.0).color(theme::DIM));
             }
@@ -34,8 +34,8 @@ pub fn tasks(ui: &mut egui::Ui, plant: &Plant) {
 }
 
 pub fn alarms(ui: &mut egui::Ui, plant: &mut Plant) {
-    panel(ui, "Аварийная сигнализация", 96.0, |ui| {
-        ScrollArea::vertical().auto_shrink(false).show(ui, |ui| {
+    panel(ui, "Аварийная сигнализация", 100.0, |ui| {
+        ScrollArea::vertical().max_height(62.0).auto_shrink(false).show(ui, |ui| {
             if plant.alarms.is_empty() {
                 ui.label(RichText::new("— нет активных сигналов —").size(10.0).color(theme::DIM));
             }
@@ -69,10 +69,10 @@ pub fn alarms(ui: &mut egui::Ui, plant: &mut Plant) {
 }
 
 pub fn journal(ui: &mut egui::Ui, plant: &Plant) {
-    panel(ui, "Журнал оператора", 140.0, |ui| {
+    panel(ui, "Журнал оператора", 150.0, |ui| {
         ScrollArea::vertical()
+            .max_height(118.0)
             .auto_shrink(false)
-            .stick_to_bottom(true)
             .show(ui, |ui| {
                 for e in &plant.log {
                     let (c, bold) = match e.cls {
