@@ -4,8 +4,9 @@ use crate::ui::theme;
 use egui::{Color32, Pos2, Rect, Response, Sense, Stroke, Vec2};
 
 /// Rocker switch with a state lamp — port of the Java `ToggleSwitch` (78×46).
+/// Layout top-to-bottom: name strip, track, ON/OFF caption — no overlap.
 pub fn toggle_switch(ui: &mut egui::Ui, name: &str, on: &mut bool) -> Response {
-    let size = Vec2::new(78.0, 46.0);
+    let size = Vec2::new(78.0, 50.0);
     let (rect, mut response) = ui.allocate_exact_size(size, Sense::click());
     if response.clicked() {
         *on = !*on;
@@ -16,7 +17,7 @@ pub fn toggle_switch(ui: &mut egui::Ui, name: &str, on: &mut bool) -> Response {
     let r = rect.min;
     // name
     painter.text(
-        Pos2::new(r.x, r.y + 8.0),
+        Pos2::new(r.x, r.y + 1.0),
         egui::Align2::LEFT_TOP,
         name,
         egui::FontId::proportional(10.0),
@@ -25,7 +26,7 @@ pub fn toggle_switch(ui: &mut egui::Ui, name: &str, on: &mut bool) -> Response {
     // track
     let tw = 46.0;
     let th = 15.0;
-    let ty = r.y + 16.0;
+    let ty = r.y + 19.0;
     let track = Rect::from_min_size(Pos2::new(r.x, ty), Vec2::new(tw, th));
     painter.rect_filled(track, 8.0, Color32::from_rgb(0x14, 0x1d, 0x26));
     painter.rect_stroke(track, 8.0, Stroke::new(1.0, theme::LINE), egui::StrokeKind::Inside);
@@ -49,7 +50,7 @@ pub fn toggle_switch(ui: &mut egui::Ui, name: &str, on: &mut bool) -> Response {
     );
     // ON/OFF caption
     painter.text(
-        Pos2::new(r.x, ty + th + 10.0),
+        Pos2::new(r.x, ty + th + 8.0),
         egui::Align2::LEFT_CENTER,
         if on_c { "ВКЛ" } else { "ОТКЛ" },
         egui::FontId::proportional(8.0),
